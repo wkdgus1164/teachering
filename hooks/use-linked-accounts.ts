@@ -1,12 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useSupabase } from "@/infra/supabase/provider"
 import { useToast } from "@/hooks/use-toast"
 import { useSupabaseFetch } from "@/infra/supabase/client-fetch"
 import { fetchLinkedAccounts, linkAccount, unlinkAccount } from "@/model/linked-account/linked-account-client"
-import type { Provider } from "@/model/linked-account/linked-account-types"
+import type { Provider, LinkedAccount } from "@/model/linked-account/linked-account-types"
 
 export function useLinkedAccounts() {
   const { supabase } = useSupabase()
@@ -39,6 +39,16 @@ export function useLinkedAccounts() {
   }
 
   const handleUnlinkAccount = async (accountId: string) => {
+    // Prevent unlinking the last account
+    if (linkedAccounts && linkedAccounts.length <= 1) {
+      toast({
+        title: "계정 연결 해제 불가",
+        description: "최소 하나의 계정은 연결되어 있어야 합니다. 다른 계정을 먼저 연결한 후 시도해주세요.",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsUnlinking(accountId)
 
     try {
@@ -65,6 +75,17 @@ export function useLinkedAccounts() {
     }
   }
 
+  // Get the count of linked accounts by provider
+  const getProviderCounts = useCallback(() => {
+    if (!linkedAccounts) return {}
+
+    return linkedAccounts.reduce((acc: Record<string, number>, account: LinkedAccount) => {
+      const provider = account.provider.toLowerCase()
+      acc[provider] = (acc[provider] || 0) + 1
+      return acc
+    }, {})
+  }, [linkedAccounts])
+
   return {
     linkedAccounts,
     loading,
@@ -73,5 +94,6 @@ export function useLinkedAccounts() {
     isUnlinking,
     linkAccount: handleLinkAccount,
     unlinkAccount: handleUnlinkAccount,
+    getProviderCounts,
   }
 }

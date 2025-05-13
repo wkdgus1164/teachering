@@ -6,6 +6,7 @@ export interface LinkedAccount {
   providerAvatar: string | null
   createdAt: string
   verified?: boolean
+  isPrimary?: boolean
 }
 
 export type Provider = "google" | "facebook" | "kakao" | "twitter" | "github" | "naver" | "line"

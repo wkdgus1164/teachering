@@ -27,17 +27,31 @@ export async function GET(request: NextRequest) {
         const providerId = data.user.identities?.find((i) => i.provider === provider)?.id
 
         if (provider && providerId) {
-          // Store the linked account
-          await supabase.from("linked_accounts").insert({
-            user_id: existingUser.user.id,
-            provider,
-            provider_id: providerId,
-            provider_email: data.user.email,
-            provider_username: data.user.user_metadata.full_name || data.user.user_metadata.name,
-            provider_avatar: data.user.user_metadata.avatar_url,
-          })
+          // Check if this provider is already linked
+          const { data: existingLinks } = await supabase
+            .from("linked_accounts")
+            .select("id")
+            .eq("user_id", existingUser.user.id)
+            .eq("provider", provider)
+            .eq("provider_id", providerId)
 
-          status = "success"
+          // Only insert if not already linked
+          if (!existingLinks || existingLinks.length === 0) {
+            // Store the linked account
+            await supabase.from("linked_accounts").insert({
+              user_id: existingUser.user.id,
+              provider,
+              provider_id: providerId,
+              provider_email: data.user.email,
+              provider_username: data.user.user_metadata.full_name || data.user.user_metadata.name,
+              provider_avatar: data.user.user_metadata.avatar_url,
+            })
+
+            status = "success"
+          } else {
+            // Account was already linked
+            status = "already-linked"
+          }
         }
       }
     }

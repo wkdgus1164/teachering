@@ -13,6 +13,8 @@ import {
   Twitter,
   CheckCircle,
   BadgeCheck,
+  Plus,
+  Info,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -89,15 +91,36 @@ export function LinkedAccounts() {
   }
 
   const linkedProviders = linkedAccounts?.map((account) => account.provider.toLowerCase()) || []
+  const availableProviders = Object.entries(PROVIDERS).filter(([key]) => !linkedProviders.includes(key.toLowerCase()))
 
   return (
     <TooltipProvider>
       <div className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-bold">연결된 계정</h2>
-          <p className="text-muted-foreground">
-            소셜 미디어 계정을 연결하여 간편하게 로그인하고 프로필 정보를 공유하세요.
-          </p>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold">연결된 계정</h2>
+            <p className="text-muted-foreground">
+              여러 소셜 미디어 계정을 연결하여 간편하게 로그인하고 프로필 정보를 공유하세요.
+            </p>
+          </div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                <Info className="h-4 w-4" />
+                <span>다중 계정 연결 안내</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="left" className="max-w-sm p-4">
+              <div className="space-y-2">
+                <h4 className="font-medium">다중 계정 연결 혜택</h4>
+                <ul className="list-disc pl-4 text-sm space-y-1">
+                  <li>여러 소셜 계정으로 로그인 가능</li>
+                  <li>계정 하나에 문제가 생겨도 다른 계정으로 접속 가능</li>
+                  <li>각 플랫폼의 프로필 정보를 통합 관리</li>
+                </ul>
+              </div>
+            </TooltipContent>
+          </Tooltip>
         </div>
 
         {newlyLinkedProvider && (
@@ -221,43 +244,122 @@ export function LinkedAccounts() {
               </CardHeader>
             </Card>
           )}
-        </div>
 
-        <div className="space-y-4">
-          <h3 className="text-lg font-medium">계정 연결하기</h3>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {Object.entries(PROVIDERS).map(([key, provider]) => {
-              const isLinked = linkedProviders.includes(key.toLowerCase())
-              const Icon = getProviderIcon(key)
-
-              return (
-                <Button
-                  key={key}
-                  variant="outline"
-                  className="justify-start gap-2"
-                  style={{
-                    borderColor: isLinked ? undefined : provider.color,
-                    opacity: isLinked ? 0.5 : 1,
-                  }}
-                  disabled={isLinked || isLinking}
-                  onClick={() => !isLinked && linkAccount(key as Provider)}
-                >
-                  <div
-                    className="flex h-5 w-5 items-center justify-center rounded-full"
-                    style={{ backgroundColor: provider.color }}
-                  >
-                    <Icon className="h-3 w-3 text-white" />
+          {/* Add Account Card */}
+          {availableProviders.length > 0 && linkedAccounts && linkedAccounts.length > 0 && (
+            <Card className="border-dashed border-2 bg-muted/20">
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
+                    <Plus className="h-4 w-4" />
                   </div>
-                  <span>
-                    {isLinked
-                      ? `${provider.name} 연결됨`
-                      : `${provider.name}${isLinking ? " 연결 중..." : " 연결하기"}`}
-                  </span>
-                </Button>
-              )
-            })}
-          </div>
+                  <CardTitle className="text-lg">계정 추가하기</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent className="pb-2">
+                <p className="text-sm text-muted-foreground">
+                  여러 소셜 계정을 연결하여 로그인 옵션을 늘리고 계정 보안을 강화하세요.
+                </p>
+              </CardContent>
+              <CardFooter>
+                <div className="flex flex-wrap gap-2">
+                  {availableProviders.slice(0, 3).map(([key, provider]) => {
+                    const Icon = getProviderIcon(key)
+                    return (
+                      <Button
+                        key={key}
+                        variant="outline"
+                        size="sm"
+                        className="gap-1"
+                        onClick={() => linkAccount(key as Provider)}
+                        disabled={isLinking}
+                      >
+                        <div
+                          className="flex h-4 w-4 items-center justify-center rounded-full"
+                          style={{ backgroundColor: provider.color }}
+                        >
+                          <Icon className="h-2 w-2 text-white" />
+                        </div>
+                        <span>{provider.name}</span>
+                      </Button>
+                    )
+                  })}
+                  {availableProviders.length > 3 && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          +{availableProviders.length - 3}개 더보기
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <div className="space-y-2">
+                          <p className="font-medium">추가 연결 가능한 계정</p>
+                          <ul className="list-disc pl-4 text-sm">
+                            {availableProviders.slice(3).map(([_, provider]) => (
+                              <li key={provider.name}>{provider.name}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                </div>
+              </CardFooter>
+            </Card>
+          )}
         </div>
+
+        {(!linkedAccounts || linkedAccounts.length === 0 || availableProviders.length > 0) && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <h3 className="text-lg font-medium">계정 연결하기</h3>
+              <span className="inline-flex items-center rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
+                여러 계정 연결 가능
+              </span>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {Object.entries(PROVIDERS).map(([key, provider]) => {
+                const isLinked = linkedProviders.includes(key.toLowerCase())
+                const Icon = getProviderIcon(key)
+
+                return (
+                  <Button
+                    key={key}
+                    variant="outline"
+                    className="justify-start gap-2"
+                    style={{
+                      borderColor: isLinked ? undefined : provider.color,
+                      opacity: isLinked ? 0.5 : 1,
+                    }}
+                    disabled={isLinked || isLinking}
+                    onClick={() => !isLinked && linkAccount(key as Provider)}
+                  >
+                    <div
+                      className="flex h-5 w-5 items-center justify-center rounded-full"
+                      style={{ backgroundColor: provider.color }}
+                    >
+                      <Icon className="h-3 w-3 text-white" />
+                    </div>
+                    <span>
+                      {isLinked
+                        ? `${provider.name} 연결됨`
+                        : `${provider.name}${isLinking ? " 연결 중..." : " 연결하기"}`}
+                    </span>
+                  </Button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertTitle>다중 계정 연결 안내</AlertTitle>
+          <AlertDescription>
+            여러 소셜 계정을 연결하면 다양한 방법으로 로그인할 수 있으며, 한 계정에 문제가 생겨도 다른 계정으로 접속할
+            수 있습니다. 모든 연결된 계정은 동일한 Teachering 프로필에 연결됩니다.
+          </AlertDescription>
+        </Alert>
       </div>
     </TooltipProvider>
   )
