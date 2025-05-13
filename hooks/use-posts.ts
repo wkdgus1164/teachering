@@ -95,32 +95,5 @@ export function usePosts() {
     [toastResponse],
   )
 
-  // Helper function to copy text to clipboard
-  // const copyToClipboard = async (text: string) => {
-  //   try {
-  //     await navigator.clipboard.writeText(text)
-  //     return true
-  //   } catch (err) {
-  //     console.error("Failed to copy to clipboard:", err)
-  //     // Fallback for older browsers or when Clipboard API fails
-  //     const textarea = document.createElement("textarea")
-  //     textarea.value = text
-  //     textarea.style.position = "fixed" // Prevent scrolling to bottom
-  //     document.body.appendChild(textarea)
-  //     textarea.focus()
-  //     textarea.select()
-
-  //     try {
-  //       document.execCommand("copy")
-  //       return true
-  //     } catch (e) {
-  //       console.error("Fallback clipboard copy failed:", e)
-  //       return false
-  //     } finally {
-  //       document.body.removeChild(textarea)
-  //     }
-  //   }
-  // }
-
   return { posts, isLoading, error, likePost, sharePost }
 }

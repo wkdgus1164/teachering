@@ -15,6 +15,7 @@ import { useUser } from "@/hooks/use-user"
 import { useAuth } from "@/hooks/use-auth"
 import authService from "@/infra/auth-service"
 import { ShareButton } from "@/components/ui/share-button"
+import { isBrowser } from "@/lib/clipboard-utils"
 
 export default function Page({ params }: { params: { id: string } }) {
   const postId = params.id
@@ -36,6 +37,14 @@ export default function Page({ params }: { params: { id: string } }) {
   const currentUser = authService.getUser()
   const isAuthor = currentUser?.id === post?.authorId
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
+
+  // Generate a safe URL for sharing that works on both client and server
+  const getShareUrl = () => {
+    if (isBrowser()) {
+      return `${window.location.origin}/post/${postId}`
+    }
+    return `/post/${postId}`
+  }
 
   if (isLoading || isAuthorLoading) {
     return (
@@ -140,7 +149,7 @@ export default function Page({ params }: { params: { id: string } }) {
                 <Heart className="h-4 w-4" />
                 <span>{post.likes}</span>
               </Button>
-              <ShareButton url={`${window.location.origin}/post/${post.id}`} title={post.title} />
+              <ShareButton url={getShareUrl()} title={post.title} />
             </div>
           </div>
 

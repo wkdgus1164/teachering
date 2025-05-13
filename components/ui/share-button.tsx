@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { STATUS } from "@/infra/api-response"
 import { useApiToast } from "@/hooks/use-api-toast"
-import { copyToClipboard } from "@/lib/clipboard-utils"
+import { copyToClipboard, isBrowser } from "@/lib/clipboard-utils"
 
 interface ShareButtonProps {
   url: string
@@ -31,7 +31,7 @@ export function ShareButton({
   // Check if Web Share API is available and likely to work
   useEffect(() => {
     // Only check on client side
-    if (typeof navigator !== "undefined") {
+    if (isBrowser()) {
       // Check if running in a secure context (required for Web Share API)
       const isSecureContext = window.isSecureContext
 

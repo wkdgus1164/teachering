@@ -9,6 +9,7 @@ import { Markdown } from "@/components/ui/markdown"
 import { useUser } from "@/hooks/use-user"
 import type { Post } from "@/model/post-model"
 import { ShareButton } from "@/components/ui/share-button"
+import { isBrowser } from "@/lib/clipboard-utils"
 
 interface PostCardProps {
   post: Post
@@ -18,6 +19,14 @@ interface PostCardProps {
 
 export function PostCard({ post, onLike, onShare }: PostCardProps) {
   const { user: author, isLoading } = useUser(post.authorId)
+
+  // Generate a safe URL for sharing that works on both client and server
+  const getShareUrl = () => {
+    if (isBrowser()) {
+      return `${window.location.origin}/post/${post.id}`
+    }
+    return `/post/${post.id}`
+  }
 
   return (
     <Card className="overflow-hidden">
@@ -60,7 +69,7 @@ export function PostCard({ post, onLike, onShare }: PostCardProps) {
               <Heart className="h-4 w-4" />
               <span>{post.likes}</span>
             </Button>
-            <ShareButton url={`${window.location.origin}/post/${post.id}`} title={post.title} size="sm" />
+            <ShareButton url={getShareUrl()} title={post.title} size="sm" />
             <Link href={`/post/${post.id}#comments`}>
               <Button variant="ghost" size="sm" className="flex items-center space-x-1">
                 <MessageSquare className="h-4 w-4" />

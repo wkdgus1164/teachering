@@ -1,9 +1,19 @@
 /**
+ * Checks if code is running in a browser environment
+ */
+export function isBrowser(): boolean {
+  return typeof window !== "undefined"
+}
+
+/**
  * Copies text to clipboard using the most appropriate available method
  * @param text The text to copy to clipboard
  * @returns A promise that resolves to true if copying was successful, false otherwise
  */
 export async function copyToClipboard(text: string): Promise<boolean> {
+  // Only run in browser environment
+  if (!isBrowser()) return false
+
   // Try using the Clipboard API first (modern browsers)
   if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
     try {

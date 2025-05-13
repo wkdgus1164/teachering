@@ -7,6 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Avatar } from "@/components/ui/avatar"
 import { useAuth } from "@/hooks/use-auth"
 import { ShareButton } from "@/components/ui/share-button"
+import { isBrowser } from "@/lib/clipboard-utils"
 
 export function ContentFeedPlaceholder() {
   const { isAuthenticated } = useAuth()
@@ -114,6 +115,14 @@ function PlaceholderPostCard({ post }: PlaceholderPostCardProps) {
   // Always link directly to the post detail page without authentication check
   const postLink = `/post/${post.id}`
 
+  // Generate a safe URL for sharing that works on both client and server
+  const getShareUrl = () => {
+    if (isBrowser()) {
+      return `${window.location.origin}/post/${post.id}`
+    }
+    return `/post/${post.id}`
+  }
+
   return (
     <Card className="h-full flex flex-col hover:shadow-md transition-shadow duration-200">
       <CardHeader className="pb-3">
@@ -153,7 +162,7 @@ function PlaceholderPostCard({ post }: PlaceholderPostCardProps) {
               <span>{post.comments}</span>
             </Button>
           </div>
-          <ShareButton url={`${window.location.origin}/post/${post.id}`} title={post.title} size="sm" />
+          <ShareButton url={getShareUrl()} title={post.title} size="sm" />
         </div>
       </CardFooter>
     </Card>
