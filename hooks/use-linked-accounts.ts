@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useSupabase } from "@/infra/supabase/provider"
 import { useToast } from "@/hooks/use-toast"
 import { useSupabaseFetch } from "@/infra/supabase/client-fetch"
 import { fetchLinkedAccounts, linkAccount, unlinkAccount } from "@/model/linked-account/linked-account-client"
-import type { Provider, LinkedAccount } from "@/model/linked-account/linked-account-types"
+import type { Provider } from "@/model/linked-account/linked-account-types"
 
 export function useLinkedAccounts() {
   const { supabase } = useSupabase()
@@ -21,6 +21,34 @@ export function useLinkedAccounts() {
     setIsLinking(true)
 
     try {
+      // Check if user is already logged in
+      const { data: userData } = await supabase.auth.getUser()
+
+      if (!userData?.user) {
+        toast({
+          title: "로그인이 필요합니다",
+          description: "계정을 연결하려면 먼저 로그인해주세요.",
+          variant: "destructive",
+        })
+        router.push("/auth/sign-in")
+        return
+      }
+
+      // Check if this provider is already linked
+      const existingProvider = linkedAccounts?.find(
+        (account) => account.provider.toLowerCase() === provider.toLowerCase(),
+      )
+
+      if (existingProvider) {
+        toast({
+          title: "이미 연결된 계정",
+          description: `${provider} 계정은 이미 연결되어 있습니다.`,
+          variant: "default",
+        })
+        setIsLinking(false)
+        return
+      }
+
       const { error } = await linkAccount(supabase, provider)
 
       if (error) throw error
@@ -33,13 +61,12 @@ export function useLinkedAccounts() {
         description: "소셜 계정 연결 중 오류가 발생했습니다. 다시 시도해주세요.",
         variant: "destructive",
       })
-    } finally {
       setIsLinking(false)
     }
   }
 
   const handleUnlinkAccount = async (accountId: string) => {
-    // Prevent unlinking the last account
+    // Prevent unlinking if it's the last account
     if (linkedAccounts && linkedAccounts.length <= 1) {
       toast({
         title: "계정 연결 해제 불가",
@@ -75,17 +102,6 @@ export function useLinkedAccounts() {
     }
   }
 
-  // Get the count of linked accounts by provider
-  const getProviderCounts = useCallback(() => {
-    if (!linkedAccounts) return {}
-
-    return linkedAccounts.reduce((acc: Record<string, number>, account: LinkedAccount) => {
-      const provider = account.provider.toLowerCase()
-      acc[provider] = (acc[provider] || 0) + 1
-      return acc
-    }, {})
-  }, [linkedAccounts])
-
   return {
     linkedAccounts,
     loading,
@@ -94,6 +110,5 @@ export function useLinkedAccounts() {
     isUnlinking,
     linkAccount: handleLinkAccount,
     unlinkAccount: handleUnlinkAccount,
-    getProviderCounts,
   }
 }

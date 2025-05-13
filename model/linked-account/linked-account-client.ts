@@ -30,11 +30,21 @@ export async function linkAccount(
   redirectTo = `${window.location.origin}/account/callback?next=${encodeURIComponent("/profile/edit?tab=linked-accounts")}`,
 ): Promise<{ error: Error | null }> {
   try {
+    // First, check if the user is logged in
+    const { data: userData } = await supabase.auth.getUser()
+
+    if (!userData?.user) {
+      throw new Error("You must be logged in to link an account")
+    }
+
+    // Initiate the OAuth flow for linking
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
         redirectTo,
         scopes: "email profile",
+        // This is important - it tells Supabase this is a linking flow, not a sign-in
+        skipBrowserRedirect: false,
       },
     })
 
