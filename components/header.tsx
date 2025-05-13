@@ -76,7 +76,7 @@ export function Header() {
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link href="/account/linked-accounts" className="cursor-pointer">
+                    <Link href="/profile/edit" className="cursor-pointer">
                       <Settings className="mr-2 h-4 w-4" />
                       <span>계정 설정</span>
                     </Link>

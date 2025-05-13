@@ -25,7 +25,7 @@ export async function fetchLinkedAccounts(supabase: any): Promise<LinkedAccount[
 export async function linkAccount(
   supabase: any,
   provider: Provider,
-  redirectTo = `${window.location.origin}/account/linked-accounts`,
+  redirectTo = `${window.location.origin}/profile/edit?tab=linked-accounts`,
 ): Promise<{ error: Error | null }> {
   try {
     const { error } = await supabase.auth.signInWithOAuth({

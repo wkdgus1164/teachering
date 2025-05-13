@@ -159,6 +159,12 @@ export interface Database {
       [_ in never]: never
     }
     Functions: {
+      populate_sample_data: {
+        Args: {
+          user_id: string
+        }
+        Returns: undefined
+      }
       [_ in never]: never
     }
     Enums: {
