@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, useRouter, notFound } from "next/navigation"
 import { MainLayout } from "@/components/layouts/main-layout"
 import { PostDetail } from "@/components/board/post-detail"
 import { CommentSection } from "@/components/board/comment-section"
@@ -26,13 +26,13 @@ export default function PostDetailPage() {
       try {
         const postData = await fetchPostById(supabase, postId)
         if (!postData) {
-          router.push("/404")
+          notFound()
           return
         }
         setPost(postData)
       } catch (error) {
         console.error("Error fetching post:", error)
-        router.push("/404")
+        notFound()
       } finally {
         setLoading(false)
       }
@@ -52,7 +52,7 @@ export default function PostDetailPage() {
   }
 
   if (!post) {
-    return null // This will be handled by the loading state or redirect
+    return null // This will be handled by the notFound() call above
   }
 
   return (

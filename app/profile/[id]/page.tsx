@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, useRouter, notFound } from "next/navigation"
 import { MainLayout } from "@/components/layouts/main-layout"
 import { ProfileHeader } from "@/components/profile/profile-header"
 import { ProfileTabs } from "@/components/profile/profile-tabs"
@@ -26,13 +26,13 @@ export default function ProfilePage() {
       try {
         const userData = await fetchUserById(supabase, userId)
         if (!userData) {
-          router.push("/404")
+          notFound()
           return
         }
         setUser(userData)
       } catch (error) {
         console.error("Error fetching user:", error)
-        router.push("/404")
+        notFound()
       } finally {
         setLoading(false)
       }
@@ -50,7 +50,7 @@ export default function ProfilePage() {
   }
 
   if (!user) {
-    return null // This will be handled by the loading state or redirect
+    return null // This will be handled by the notFound() call above
   }
 
   return (

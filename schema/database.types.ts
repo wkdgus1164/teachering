@@ -154,11 +154,93 @@ export interface Database {
           updated_at?: string
         }
       }
+      error_logs: {
+        Row: {
+          id: string
+          created_at: string
+          error_message: string
+          error_stack: string | null
+          error_type: string | null
+          component: string | null
+          user_id: string | null
+          user_agent: string | null
+          request_path: string | null
+          request_method: string | null
+          request_params: Json | null
+          severity: string
+          resolved: boolean
+          resolved_at: string | null
+          resolved_by: string | null
+          resolution_notes: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          error_message: string
+          error_stack?: string | null
+          error_type?: string | null
+          component?: string | null
+          user_id?: string | null
+          user_agent?: string | null
+          request_path?: string | null
+          request_method?: string | null
+          request_params?: Json | null
+          severity?: string
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolution_notes?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          error_message?: string
+          error_stack?: string | null
+          error_type?: string | null
+          component?: string | null
+          user_id?: string | null
+          user_agent?: string | null
+          request_path?: string | null
+          request_method?: string | null
+          request_params?: Json | null
+          severity?: string
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          resolution_notes?: string | null
+        }
+      }
+      user_roles: {
+        Row: {
+          id: string
+          user_id: string
+          role: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          role: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          role?: string
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      populate_sample_data: {
+        Args: {
+          user_id: string
+        }
+        Returns: undefined
+      }
       [_ in never]: never
     }
     Enums: {
