@@ -1,78 +1,115 @@
 "use client"
 
+import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { useSupabase } from "@/infra/supabase/provider"
-import { useState, useEffect } from "react"
-import type { User } from "@supabase/supabase-js"
+import authService from "@/infra/auth-service"
+import type { LoginCredentials, RegisterCredentials } from "@/schema/auth-schema"
+import { STATUS } from "@/infra/api-response"
+import { useApiToast } from "./use-api-toast"
 
 export function useAuth() {
-  const { supabase } = useSupabase()
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { toastResponse } = useApiToast()
 
   useEffect(() => {
-    const getUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      setUser(user)
-      setLoading(false)
+    // Check if user is authenticated
+    const checkAuth = () => {
+      const authenticated = authService.isAuthenticated()
+      setIsAuthenticated(authenticated)
+      setIsLoading(false)
     }
 
-    getUser()
+    checkAuth()
+  }, [])
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-      setLoading(false)
-      router.refresh()
-    })
+  const login = useCallback(
+    async (credentials: LoginCredentials, redirectPath = "/feed") => {
+      setIsLoading(true)
+      setError(null)
 
-    return () => {
-      subscription.unsubscribe()
-    }
-  }, [supabase, router])
+      try {
+        const response = await authService.login(credentials)
+        toastResponse(response)
 
-  const signInWithGoogle = async () => {
-    return supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
-  }
+        if (response.status === STATUS.SUCCESS && response.data) {
+          setIsAuthenticated(true)
+          router.push(redirectPath)
+        } else {
+          setError(response.message)
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "로그인에 실패했습니다.")
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [router, toastResponse],
+  )
 
-  const signInWithFacebook = async () => {
-    return supabase.auth.signInWithOAuth({
-      provider: "facebook",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
-  }
+  const register = useCallback(
+    async (credentials: RegisterCredentials, redirectPath = "/feed") => {
+      setIsLoading(true)
+      setError(null)
 
-  const signInWithKakao = async () => {
-    return supabase.auth.signInWithOAuth({
-      provider: "kakao",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    })
-  }
+      try {
+        const response = await authService.register(credentials)
+        toastResponse(response)
 
-  const signOut = async () => {
-    await supabase.auth.signOut()
-    router.push("/")
-  }
+        if (response.status === STATUS.SUCCESS && response.data) {
+          setIsAuthenticated(true)
+          router.push(redirectPath)
+        } else {
+          setError(response.message)
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "회원가입에 실패했습니다.")
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [router, toastResponse],
+  )
+
+  const loginWithSNS = useCallback(
+    async (provider: "google" | "github" | "kakao", redirectPath = "/feed") => {
+      setIsLoading(true)
+      setError(null)
+
+      try {
+        const response = await authService.loginWithSNS(provider)
+        toastResponse(response)
+
+        if (response.status === STATUS.SUCCESS && response.data) {
+          setIsAuthenticated(true)
+          router.push(redirectPath)
+        } else {
+          setError(response.message)
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : `${provider} 로그인에 실패했습니다.`)
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [router, toastResponse],
+  )
+
+  const logout = useCallback(() => {
+    authService.logout()
+    setIsAuthenticated(false)
+    router.push("/login")
+  }, [router])
 
   return {
-    user,
-    loading,
-    signInWithGoogle,
-    signInWithFacebook,
-    signInWithKakao,
-    signOut,
+    isAuthenticated,
+    isLoading,
+    error,
+    login,
+    register,
+    loginWithSNS,
+    logout,
   }
 }

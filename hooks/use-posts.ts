@@ -1,237 +1,126 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { useSupabase } from "@/infra/supabase/provider"
-import { useToast } from "@/hooks/use-toast"
-import type { PostFormValues } from "@/schema/zod-schemas"
+import { useState, useEffect, useCallback } from "react"
+import postService from "@/infra/post-service"
+import type { Post } from "@/model/post-model"
+import { STATUS } from "@/infra/api-response"
+import { useApiToast } from "./use-api-toast"
+
+// Import the utility at the top of the file
+import { copyToClipboard } from "@/lib/clipboard-utils"
 
 export function usePosts() {
-  const { supabase } = useSupabase()
-  const router = useRouter()
-  const { toast } = useToast()
-  const [isLoading, setIsLoading] = useState(false)
+  const [posts, setPosts] = useState<Post[]>([])
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(null)
+  const { toastResponse } = useApiToast()
 
-  const createPost = async (values: PostFormValues) => {
-    setIsLoading(true)
+  useEffect(() => {
+    const fetchPosts = async () => {
+      setIsLoading(true)
+      setError(null)
 
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      try {
+        const response = await postService.getPosts()
+        // Don't show toast for initial data loading
 
-      if (!user) {
-        toast({
-          title: "로그인이 필요합니다",
-          description: "게시글을 작성하려면 로그인해주세요",
-          variant: "destructive",
-        })
-        router.push("/auth/sign-in")
-        return
+        if (response.status === STATUS.SUCCESS && response.data) {
+          setPosts(response.data)
+        } else {
+          setError(response.message)
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "게시글 목록을 불러오는데 실패했습니다.")
+      } finally {
+        setIsLoading(false)
       }
-
-      const { error, data } = await supabase
-        .from("posts")
-        .insert({
-          title: values.title,
-          content: values.content,
-          category: values.category || null,
-          author_id: user.id,
-        })
-        .select()
-
-      if (error) throw error
-
-      toast({
-        title: "게시글이 작성되었습니다",
-        description: "게시판으로 이동합니다",
-      })
-
-      if (data && data[0]) {
-        router.push(`/board/${data[0].id}`)
-      } else {
-        router.push("/board")
-      }
-      router.refresh()
-    } catch (error) {
-      console.error(error)
-      toast({
-        title: "오류가 발생했습니다",
-        description: "잠시 후 다시 시도해주세요",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
     }
-  }
 
-  const updatePost = async (id: string, values: PostFormValues) => {
-    setIsLoading(true)
+    fetchPosts()
+  }, [])
 
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+  const likePost = useCallback(
+    async (postId: string) => {
+      try {
+        const response = await postService.likePost(postId)
+        toastResponse(response)
 
-      if (!user) {
-        toast({
-          title: "로그인이 필요합니다",
-          description: "게시글을 수정하려면 로그인해주세요",
-          variant: "destructive",
-        })
-        router.push("/auth/sign-in")
-        return
+        if (response.status === STATUS.SUCCESS) {
+          // Update the post in the local state
+          setPosts((prevPosts) =>
+            prevPosts.map((post) => (post.id === postId ? { ...post, likes: post.likes + 1 } : post)),
+          )
+        } else {
+          setError(response.message)
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "좋아요를 누르는데 실패했습니다.")
       }
+    },
+    [toastResponse],
+  )
 
-      // Check if user is the author
-      const { data: post } = await supabase.from("posts").select("author_id").eq("id", id).single()
+  // Then update the sharePost function
+  const sharePost = useCallback(
+    async (postId: string) => {
+      try {
+        const response = await postService.sharePost(postId)
 
-      if (!post || post.author_id !== user.id) {
-        toast({
-          title: "권한이 없습니다",
-          description: "자신의 게시글만 수정할 수 있습니다",
-          variant: "destructive",
-        })
-        return
+        if (response.status === STATUS.SUCCESS && response.data) {
+          const shareLink = response.data
+
+          // Always default to clipboard copy which is more reliable
+          const copied = await copyToClipboard(shareLink)
+
+          if (copied) {
+            toastResponse({
+              status: STATUS.SUCCESS,
+              data: shareLink,
+              message: "링크가 클립보드에 복사되었습니다.",
+            })
+          } else {
+            toastResponse({
+              status: STATUS.ERROR,
+              data: null,
+              message: "링크 복사에 실패했습니다.",
+            })
+          }
+        } else {
+          setError(response.message)
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "게시글 공유에 실패했습니다.")
       }
+    },
+    [toastResponse],
+  )
 
-      const { error } = await supabase
-        .from("posts")
-        .update({
-          title: values.title,
-          content: values.content,
-          category: values.category || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", id)
+  // Helper function to copy text to clipboard
+  // const copyToClipboard = async (text: string) => {
+  //   try {
+  //     await navigator.clipboard.writeText(text)
+  //     return true
+  //   } catch (err) {
+  //     console.error("Failed to copy to clipboard:", err)
+  //     // Fallback for older browsers or when Clipboard API fails
+  //     const textarea = document.createElement("textarea")
+  //     textarea.value = text
+  //     textarea.style.position = "fixed" // Prevent scrolling to bottom
+  //     document.body.appendChild(textarea)
+  //     textarea.focus()
+  //     textarea.select()
 
-      if (error) throw error
+  //     try {
+  //       document.execCommand("copy")
+  //       return true
+  //     } catch (e) {
+  //       console.error("Fallback clipboard copy failed:", e)
+  //       return false
+  //     } finally {
+  //       document.body.removeChild(textarea)
+  //     }
+  //   }
+  // }
 
-      toast({
-        title: "게시글이 수정되었습니다",
-        description: "게시글 페이지로 이동합니다",
-      })
-
-      router.push(`/board/${id}`)
-      router.refresh()
-    } catch (error) {
-      console.error(error)
-      toast({
-        title: "오류가 발생했습니다",
-        description: "잠시 후 다시 시도해주세요",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const deletePost = async (id: string) => {
-    setIsLoading(true)
-
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (!user) {
-        toast({
-          title: "로그인이 필요합니다",
-          description: "게시글을 삭제하려면 로그인해주세요",
-          variant: "destructive",
-        })
-        router.push("/auth/sign-in")
-        return
-      }
-
-      // Check if user is the author
-      const { data: post } = await supabase.from("posts").select("author_id").eq("id", id).single()
-
-      if (!post || post.author_id !== user.id) {
-        toast({
-          title: "권한이 없습니다",
-          description: "자신의 게시글만 삭제할 수 있습니다",
-          variant: "destructive",
-        })
-        return
-      }
-
-      const { error } = await supabase.from("posts").delete().eq("id", id)
-
-      if (error) throw error
-
-      toast({
-        title: "게시글이 삭제되었습니다",
-        description: "게시판으로 이동합니다",
-      })
-
-      router.push("/board")
-      router.refresh()
-    } catch (error) {
-      console.error(error)
-      toast({
-        title: "오류가 발생했습니다",
-        description: "잠시 후 다시 시도해주세요",
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const toggleLike = async (postId: string) => {
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (!user) {
-        toast({
-          title: "로그인이 필요합니다",
-          description: "좋아요를 누르려면 로그인해주세요",
-          variant: "destructive",
-        })
-        router.push("/auth/sign-in")
-        return
-      }
-
-      // Check if user already liked the post
-      const { data: existingLike } = await supabase
-        .from("likes")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("post_id", postId)
-        .maybeSingle()
-
-      if (existingLike) {
-        // Unlike
-        const { error } = await supabase.from("likes").delete().eq("id", existingLike.id)
-        if (error) throw error
-      } else {
-        // Like
-        const { error } = await supabase.from("likes").insert({
-          user_id: user.id,
-          post_id: postId,
-        })
-        if (error) throw error
-      }
-
-      router.refresh()
-    } catch (error) {
-      console.error(error)
-      toast({
-        title: "오류가 발생했습니다",
-        description: "잠시 후 다시 시도해주세요",
-        variant: "destructive",
-      })
-    }
-  }
-
-  return {
-    createPost,
-    updatePost,
-    deletePost,
-    toggleLike,
-    isLoading,
-  }
+  return { posts, isLoading, error, likePost, sharePost }
 }
