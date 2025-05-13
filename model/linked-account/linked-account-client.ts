@@ -19,13 +19,15 @@ export async function fetchLinkedAccounts(supabase: any): Promise<LinkedAccount[
     providerUsername: account.provider_username,
     providerAvatar: account.provider_avatar,
     createdAt: account.created_at,
+    // Consider an account verified if it has an email or username
+    verified: Boolean(account.provider_email || account.provider_username),
   }))
 }
 
 export async function linkAccount(
   supabase: any,
   provider: Provider,
-  redirectTo = `${window.location.origin}/profile/edit?tab=linked-accounts`,
+  redirectTo = `${window.location.origin}/account/callback?next=${encodeURIComponent("/profile/edit?tab=linked-accounts")}`,
 ): Promise<{ error: Error | null }> {
   try {
     const { error } = await supabase.auth.signInWithOAuth({
