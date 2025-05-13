@@ -26,21 +26,21 @@ export function Footer() {
               </ul>
             </div>
             <div className="space-y-3">
-              <h4 className="text-sm font-medium">정보</h4>
+              <h4 className="text-sm font-medium">계정</h4>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <Link href="/about" className="text-muted-foreground hover:text-foreground">
-                    소개
+                  <Link href="/auth/sign-in" className="text-muted-foreground hover:text-foreground">
+                    로그인
                   </Link>
                 </li>
                 <li>
-                  <Link href="/privacy" className="text-muted-foreground hover:text-foreground">
-                    개인정보처리방침
+                  <Link href="/auth/sign-up" className="text-muted-foreground hover:text-foreground">
+                    회원가입
                   </Link>
                 </li>
                 <li>
-                  <Link href="/terms" className="text-muted-foreground hover:text-foreground">
-                    이용약관
+                  <Link href="/profile/edit" className="text-muted-foreground hover:text-foreground">
+                    계정 설정
                   </Link>
                 </li>
               </ul>
