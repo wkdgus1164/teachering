@@ -41,7 +41,7 @@ export async function fetchLinkedAccounts(supabase: any): Promise<LinkedAccount[
 export async function linkAccount(
   supabase: any,
   provider: Provider,
-  redirectTo = `${window.location.origin}/account/callback?next=${encodeURIComponent("/profile/edit?tab=linked-accounts")}`,
+  redirectTo = `${window.location.origin}/account/callback?next=${encodeURIComponent("/profile/edit?tab=linked-accounts")}&provider=${provider}`,
 ): Promise<{ error: Error | null }> {
   try {
     // First, check if the user is logged in
