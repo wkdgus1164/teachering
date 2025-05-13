@@ -1,0 +1,168 @@
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
+
+export interface Database {
+  public: {
+    Tables: {
+      profiles: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          full_name: string | null
+          avatar_url: string | null
+          school: string | null
+          subject: string | null
+          bio: string | null
+        }
+        Insert: {
+          id: string
+          created_at?: string
+          updated_at?: string
+          full_name?: string | null
+          avatar_url?: string | null
+          school?: string | null
+          subject?: string | null
+          bio?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          full_name?: string | null
+          avatar_url?: string | null
+          school?: string | null
+          subject?: string | null
+          bio?: string | null
+        }
+      }
+      posts: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          title: string
+          content: string
+          author_id: string
+          category: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          title: string
+          content: string
+          author_id: string
+          category?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          title?: string
+          content?: string
+          author_id?: string
+          category?: string | null
+        }
+      }
+      comments: {
+        Row: {
+          id: string
+          created_at: string
+          updated_at: string
+          content: string
+          author_id: string
+          post_id: string
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          content: string
+          author_id: string
+          post_id: string
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          updated_at?: string
+          content?: string
+          author_id?: string
+          post_id?: string
+        }
+      }
+      likes: {
+        Row: {
+          id: string
+          created_at: string
+          user_id: string
+          post_id: string | null
+          comment_id: string | null
+        }
+        Insert: {
+          id?: string
+          created_at?: string
+          user_id: string
+          post_id?: string | null
+          comment_id?: string | null
+        }
+        Update: {
+          id?: string
+          created_at?: string
+          user_id?: string
+          post_id?: string | null
+          comment_id?: string | null
+        }
+      }
+      linked_accounts: {
+        Row: {
+          id: string
+          user_id: string
+          provider: string
+          provider_id: string
+          provider_email: string | null
+          provider_username: string | null
+          provider_avatar: string | null
+          access_token: string | null
+          refresh_token: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          provider: string
+          provider_id: string
+          provider_email?: string | null
+          provider_username?: string | null
+          provider_avatar?: string | null
+          access_token?: string | null
+          refresh_token?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          provider?: string
+          provider_id?: string
+          provider_email?: string | null
+          provider_username?: string | null
+          provider_avatar?: string | null
+          access_token?: string | null
+          refresh_token?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
+    Enums: {
+      [_ in never]: never
+    }
+  }
+}
