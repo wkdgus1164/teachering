@@ -36,27 +36,35 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 export function LinkedAccounts() {
-  const { linkedAccounts, loading, isLinking, isUnlinking, linkAccount, unlinkAccount } = useLinkedAccounts()
+  const { linkedAccounts, loading, isLinking, isUnlinking, linkAccount, unlinkAccount, refreshAccounts } =
+    useLinkedAccounts()
   const [unlinkingId, setUnlinkingId] = useState<string | null>(null)
   const [newlyLinkedProvider, setNewlyLinkedProvider] = useState<string | null>(null)
   const searchParams = useSearchParams()
 
-  // Check if we just returned from a successful account linking
+  // Check if we just returned from an account linking attempt
   useEffect(() => {
     const status = searchParams.get("status")
     const provider = searchParams.get("provider")
 
-    if (status === "success" && provider) {
-      setNewlyLinkedProvider(provider)
+    if (status && provider) {
+      // Refresh the linked accounts list
+      refreshAccounts()
 
-      // Clear the notification after 5 seconds
-      const timer = setTimeout(() => {
-        setNewlyLinkedProvider(null)
-      }, 5000)
-
-      return () => clearTimeout(timer)
+      if (status === "success") {
+        setNewlyLinkedProvider(provider)
+        // Clear the notification after 5 seconds
+        const timer = setTimeout(() => {
+          setNewlyLinkedProvider(null)
+        }, 5000)
+        return () => clearTimeout(timer)
+      } else if (status === "already-linked") {
+        // Show a message that the account is already linked
+      } else if (status === "error") {
+        // Show an error message
+      }
     }
-  }, [searchParams])
+  }, [searchParams, refreshAccounts])
 
   const handleUnlink = async () => {
     if (unlinkingId) {

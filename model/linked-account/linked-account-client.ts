@@ -3,25 +3,39 @@
 import type { LinkedAccount, Provider } from "./linked-account-types"
 
 export async function fetchLinkedAccounts(supabase: any): Promise<LinkedAccount[]> {
-  const { data, error } = await supabase.from("linked_accounts").select("*").order("created_at", { ascending: false })
+  try {
+    const { data: userData } = await supabase.auth.getUser()
+    if (!userData?.user) {
+      return []
+    }
 
-  if (error) {
-    console.error("Error fetching linked accounts:", error)
+    const { data, error } = await supabase
+      .from("linked_accounts")
+      .select("*")
+      .eq("user_id", userData.user.id)
+      .order("created_at", { ascending: false })
+
+    if (error) {
+      console.error("Error fetching linked accounts:", error)
+      return []
+    }
+
+    if (!data) return []
+
+    return data.map((account: any) => ({
+      id: account.id,
+      provider: account.provider,
+      providerEmail: account.provider_email,
+      providerUsername: account.provider_username,
+      providerAvatar: account.provider_avatar,
+      createdAt: account.created_at,
+      // Consider an account verified if it has an email or username
+      verified: Boolean(account.provider_email || account.provider_username),
+    }))
+  } catch (error) {
+    console.error("Error in fetchLinkedAccounts:", error)
     return []
   }
-
-  if (!data) return []
-
-  return data.map((account: any) => ({
-    id: account.id,
-    provider: account.provider,
-    providerEmail: account.provider_email,
-    providerUsername: account.provider_username,
-    providerAvatar: account.provider_avatar,
-    createdAt: account.created_at,
-    // Consider an account verified if it has an email or username
-    verified: Boolean(account.provider_email || account.provider_username),
-  }))
 }
 
 export async function linkAccount(
@@ -43,7 +57,6 @@ export async function linkAccount(
       options: {
         redirectTo,
         scopes: "email profile",
-        // This is important - it tells Supabase this is a linking flow, not a sign-in
         skipBrowserRedirect: false,
       },
     })

@@ -110,5 +110,6 @@ export function useLinkedAccounts() {
     isUnlinking,
     linkAccount: handleLinkAccount,
     unlinkAccount: handleUnlinkAccount,
+    refreshAccounts: mutate,
   }
 }
